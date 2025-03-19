@@ -94,14 +94,21 @@ for(int x = -expand; x < expand*2; x++) {
 				distTarget = vec3(distTarget.xy, 0.);
 			}
 			float dist = 1.;
+			vec3 diff = distTarget - remainder;
 			switch(distanceFunc) {
-				case 0: dist = distance(remainder, distTarget); // Euclidean
-				break;
-				case 1: dist = pow(distance(remainder, distTarget), 2.); // Euclidian squared
+				case 0: // Comparisons between squared and rooted are the same, it's cheaper to calculate with squared
+				case 1:
+					vec3 distV = vec3(pow(distTarget.x - remainder.x, 2.), pow(distTarget.y - remainder.y, 2.), pow(distTarget.z - remainder.z, 2.));
+					dist = distV.x + distV.y + distV.z;
 				break;
 				case 2: dist = abs(remainder.x - distTarget.x) + abs(remainder.y - distTarget.y) + abs(remainder.z - distTarget.z); // Manhattan
 				break;
-				case 3: dist = (abs(remainder.x - distTarget.x) + abs(remainder.y - distTarget.y) + abs(remainder.z - distTarget.z) + distance(remainder, distTarget)) / 2.; // Hybrid
+				case 3:
+					vec3 distV = vec3(pow(distTarget.x - remainder.x, 2.), pow(distTarget.y - remainder.y, 2.), pow(distTarget.z - remainder.z, 2.));
+					float distSquared = distV.x + distV.y + distV.z;
+					
+					float distManhattanSquared = pow(abs(remainder.x - distTarget.x) + abs(remainder.y - distTarget.y) + abs(remainder.z - distTarget.z), 2.);
+					dist = (distSquared + distManhattanSquared) / 2.; // Hybrid
 				break;
 			}
 			dist *= distanceScale;
@@ -116,6 +123,11 @@ for(int x = -expand; x < expand*2; x++) {
 			}
 		}
 	}
+}
+
+if (distanceFunc == 0 || distanceFunc == 3) { // Euclidian or hybrid
+	minFound = sqrt(minFound);
+	found2 = sqrt(found2);
 }
 
 return vec3(cellValue, clamp(minFound, 0., 1.), clamp(found2, 0., 1.));

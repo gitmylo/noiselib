@@ -16,7 +16,7 @@ parameter_name = "Scale"
 hint = 1
 max = 999999.0
 default_value_enabled = true
-default_value = 20.0
+default_value = 5.0
 
 [sub_resource type="VisualShaderNodeExpression" id="VisualShaderNodeExpression_8jh6y"]
 size = Vector2(680, 460)
@@ -65,17 +65,19 @@ default_value_enabled = true
 default_value = 1.0
 
 [sub_resource type="VisualShaderNodeCustom" id="VisualShaderNodeCustom_4gcqo"]
+output_port_for_preview = 0
 default_input_values = [0, Vector3(0, 0, 0), 1, Vector3(0, 0, 0), 2, Vector3(10, 10, 10), 3, 0.0]
 initialized = true
 script = ExtResource("2_qiej6")
 
 [sub_resource type="VisualShaderNodeCustom" id="VisualShaderNodeCustom_k806d"]
+output_port_for_preview = 0
 default_input_values = [0, Vector3(0, 0, 0), 1, Vector3(0, 0, 0), 2, Vector3(21, 21, 21)]
 initialized = true
 script = ExtResource("3_kd13p")
 
 [sub_resource type="VisualShaderNodeFloatConstant" id="VisualShaderNodeFloatConstant_kd13p"]
-constant = 100.0
+constant = 10.0
 
 [sub_resource type="VisualShaderNodeInput" id="VisualShaderNodeInput_kd13p"]
 input_name = "uv"
@@ -90,7 +92,7 @@ code = "shader_type spatial;
 render_mode blend_mix, depth_draw_opaque, cull_back, diffuse_lambert, specular_schlick_ggx;
 
 uniform bool Animate;
-uniform float Scale : hint_range(0.0, 999999.0) = 20.0;
+uniform float Scale : hint_range(0.0, 999999.0) = 5.0;
 uniform float Distance_Scale : hint_range(0.00999999977648, 10.0) = 1.0;
 uniform int Distance_Function : hint_enum(\"Euclidean\", \"Euclidean Squared\", \"Manhattan\", \"Hybrid\") = 0;
 uniform float Jitter : hint_range(-5.0, 5.0) = 1.0;
@@ -117,7 +119,9 @@ vec3 roundUV = floor(scaleUV);
 
 int expand = 2;
 float minFound = 999.;
+vec3 minFoundV = vec3(0.); // Init with empty
 float found2 = 1.; // Second closest value found
+vec3 found2V = vec3(0.); // Init with empty
 float cellValue = 0.; // Celluar value, random for each position, but consistent.
 for(int x = -expand; x < expand*2; x++) {
 	for(int y = -expand; y < expand*2; y++) {
@@ -130,14 +134,21 @@ for(int x = -expand; x < expand*2; x++) {
 				distTarget = vec3(distTarget.xy, 0.);
 			}
 			float dist = 1.;
+			vec3 diff = distTarget - remainder;
 			switch(distanceFunc) {
-				case 0: dist = distance(remainder, distTarget); // Euclidean
-				break;
-				case 1: dist = pow(distance(remainder, distTarget), 2.); // Euclidian squared
+				case 0: // Comparisons between squared and rooted are the same, it's cheaper to calculate with squared
+				case 1:
+					vec3 distV = vec3(pow(distTarget.x - remainder.x, 2.), pow(distTarget.y - remainder.y, 2.), pow(distTarget.z - remainder.z, 2.));
+					dist = distV.x + distV.y + distV.z;
 				break;
 				case 2: dist = abs(remainder.x - distTarget.x) + abs(remainder.y - distTarget.y) + abs(remainder.z - distTarget.z); // Manhattan
 				break;
-				case 3: dist = (abs(remainder.x - distTarget.x) + abs(remainder.y - distTarget.y) + abs(remainder.z - distTarget.z) + distance(remainder, distTarget)) / 2.; // Hybrid
+				case 3:
+					vec3 distV = vec3(pow(distTarget.x - remainder.x, 2.), pow(distTarget.y - remainder.y, 2.), pow(distTarget.z - remainder.z, 2.));
+					float distSqrt = distV.x + distV.y + distV.z;
+					
+					float distManhattanSquared = pow(abs(remainder.x - distTarget.x) + abs(remainder.y - distTarget.y) + abs(remainder.z - distTarget.z), 2.);
+					dist = (distSqrt + distManhattanSquared) / 2.; // Hybrid
 				break;
 			}
 			dist *= distanceScale;
@@ -152,6 +163,11 @@ for(int x = -expand; x < expand*2; x++) {
 			}
 		}
 	}
+}
+
+if (distanceFunc == 0 || distanceFunc == 3) { // Euclidian or hybrid
+	minFound = sqrt(minFound);
+	found2 = sqrt(found2);
 }
 
 return vec3(cellValue, clamp(minFound, 0., 1.), clamp(found2, 0., 1.));
@@ -239,7 +255,8 @@ void fragment() {
 
 }
 "
-graph_offset = Vector2(-227.016, 30.3825)
+graph_offset = Vector2(-240, 330)
+preview_params/Distance_Function = "0"
 nodes/fragment/0/position = Vector2(900, 400)
 nodes/fragment/3/node = SubResource("VisualShaderNodeInput_kd13p")
 nodes/fragment/3/position = Vector2(-800, 160)
@@ -278,9 +295,9 @@ nodes/fragment/18/position = Vector2(-100, 380)
 nodes/fragment/19/node = SubResource("VisualShaderNodeFloatParameter_kd13p")
 nodes/fragment/19/position = Vector2(-120, 1040)
 nodes/fragment/20/node = SubResource("VisualShaderNodeCustom_4gcqo")
-nodes/fragment/20/position = Vector2(-89.4943, 100.746)
+nodes/fragment/20/position = Vector2(-360, -160)
 nodes/fragment/21/node = SubResource("VisualShaderNodeCustom_k806d")
-nodes/fragment/21/position = Vector2(380, 100)
+nodes/fragment/21/position = Vector2(460, 40)
 nodes/fragment/22/node = SubResource("VisualShaderNodeFloatConstant_kd13p")
 nodes/fragment/22/position = Vector2(221.41, 263.033)
-nodes/fragment/connections = PackedInt32Array(6, 0, 5, 2, 5, 0, 13, 1, 14, 0, 13, 0, 10, 0, 12, 3, 14, 0, 18, 6, 15, 0, 18, 5, 17, 0, 18, 4, 11, 0, 18, 2, 13, 0, 18, 1, 18, 0, 12, 0, 18, 1, 12, 1, 18, 2, 12, 2, 19, 0, 18, 3, 3, 0, 18, 0, 3, 0, 21, 0, 22, 0, 21, 2, 12, 0, 0, 0)
+nodes/fragment/connections = PackedInt32Array(6, 0, 5, 2, 5, 0, 13, 1, 14, 0, 13, 0, 10, 0, 12, 3, 14, 0, 18, 6, 15, 0, 18, 5, 17, 0, 18, 4, 11, 0, 18, 2, 13, 0, 18, 1, 18, 0, 12, 0, 18, 1, 12, 1, 18, 2, 12, 2, 19, 0, 18, 3, 3, 0, 18, 0, 3, 0, 21, 0, 22, 0, 21, 2, 3, 0, 20, 0, 12, 0, 0, 0)

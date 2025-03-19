@@ -15,20 +15,19 @@ render_priority = 0
 shader = ExtResource("2_ia1lp")
 shader_parameter/Animate = false
 shader_parameter/Scale = 50.0
-shader_parameter/Distance_Scale = 0.75
+shader_parameter/Distance_Scale = 1.0
 shader_parameter/Distance_Function = 0
 shader_parameter/Jitter = 1.0
-shader_parameter/Return_Type = 0
+shader_parameter/Return_Type = 1
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_uhqqe"]
 material = SubResource("ShaderMaterial_uhqqe")
 
 [sub_resource type="FastNoiseLite" id="FastNoiseLite_ia1lp"]
 noise_type = 2
-frequency = 0.025
+frequency = 0.0185
 fractal_type = 0
 fractal_octaves = 4
-cellular_return_type = 0
 
 [sub_resource type="NoiseTexture2D" id="NoiseTexture2D_ia1lp"]
 width = 2048
