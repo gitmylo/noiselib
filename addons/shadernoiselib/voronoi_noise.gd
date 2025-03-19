@@ -71,6 +71,7 @@ func _get_global_code(mode):
 	
 	// Returns (value, dist, dist2)
 	vec3 voronoi_noise_sample( vec3 uvw, vec3 offset, vec3 scale, float distanceScale, int distanceFunc, float jitter, bool is3d ) {
+		if(distanceFunc > 3) return vec3(0.); // Disable
 vec3 scaleUV = uvw * scale + offset;
 if(!is3d) {
 	scaleUV = vec3(scaleUV.xy, 0.);
