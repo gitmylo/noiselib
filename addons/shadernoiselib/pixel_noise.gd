@@ -47,15 +47,15 @@ func _get_output_port_type(port):
 func _get_global_code(mode):
 	return """
 	vec3 pixel_noise_hash_noise_range( vec3 p ) {
-		p = mod(p * p.zxy + p.yzx, 96.267); // New pseudo-random step which improves the noise function here
-		p = p + p.zxy - p.yzx;
-		p *= mat3(vec3(127.1, 311.7, -53.7), vec3(269.5, 183.3, 77.1), vec3(-301.7, 27.3, 215.3));
-		return clamp(2.0 * fract(fract(p)*4375.55) -1., -1, 1);
+		p *= mat3(vec3(-4252.151, 3441.637, -1331.937), vec3(7569.135, -134.389, 5377.171754), vec3(-3301.746, 247.317, 2715.364));
+		vec3 result = fract(fract(p)*6753.7245) -1.;
+		return 2.0 * fract(vec3((result.x + result.y + result.z) / 3.) * vec3(15714.5427, 7541.5254, 54224.7245)) -1.;
 	}
 	
 	float pixel_noise_sample(vec3 uvw, vec3 scale) {
 		uvw = floor(uvw * scale);
-		return mod(pixel_noise_hash_noise_range(uvw).x, 1.);
+		vec3 vals = pixel_noise_hash_noise_range(uvw);
+		return mod(vals.x, 1.);
 	}
 	"""
 

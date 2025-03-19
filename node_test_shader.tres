@@ -72,12 +72,12 @@ script = ExtResource("2_qiej6")
 
 [sub_resource type="VisualShaderNodeCustom" id="VisualShaderNodeCustom_k806d"]
 output_port_for_preview = 0
-default_input_values = [0, Vector3(0, 0, 0), 1, Vector3(0, 0, 0), 2, Vector3(21, 21, 21)]
+default_input_values = [0, Vector3(0, 0, 0), 1, Vector3(-0.3, -0.3, 0), 2, Vector3(21, 21, 21)]
 initialized = true
 script = ExtResource("3_kd13p")
 
 [sub_resource type="VisualShaderNodeFloatConstant" id="VisualShaderNodeFloatConstant_kd13p"]
-constant = 10.0
+constant = 100.0
 
 [sub_resource type="VisualShaderNodeInput" id="VisualShaderNodeInput_kd13p"]
 input_name = "uv"
@@ -102,10 +102,14 @@ uniform int Return_Type : hint_enum(\"Cell value\", \"Distance\", \"Distance2\")
 // VoronoiNoise3D
 
 	vec3 voronoi_noise_hash_noise_range( vec3 p ) {
-		p = mod(p * p.zxy + p.yzx, 96.267); // New pseudo-random step which improves the noise function here
-		p = p + p.zxy - p.yzx;
-		p *= mat3(vec3(127.1, 311.7, -53.7), vec3(269.5, 183.3, 77.1), vec3(-301.7, 27.3, 215.3));
-		return 2.0 * fract(fract(p)*4375.55) -1.;
+		p *= mat3(vec3(-4252.151, 3441.637, -1331.937), vec3(7569.135, -134.389, 5377.171754), vec3(-3301.746, 247.317, 2715.364));
+		vec3 result = fract(fract(p)*6753.7245) -1.;
+		return 2.0 * fract(vec3((result.x + result.y + result.z) / 3.) * vec3(15714.5427, 7541.5254, 54224.7245)) -1.;
+		
+		//p = mod(p * p.zxy + p.yzx, 96.267); // New pseudo-random step which improves the noise function here
+		//p = p + p.zxy - p.yzx;
+		//p *= mat3(vec3(127.1, 311.7, -53.7), vec3(269.5, 183.3, 77.1), vec3(-301.7, 27.3, 215.3));
+		//return 2.0 * fract(fract(p)*4375.55) -1.;
 	}
 	
 	// Returns (value, dist, dist2)
@@ -119,17 +123,16 @@ vec3 roundUV = floor(scaleUV);
 
 int expand = 2;
 float minFound = 999.;
-vec3 minFoundV = vec3(0.); // Init with empty
 float found2 = 1.; // Second closest value found
-vec3 found2V = vec3(0.); // Init with empty
 float cellValue = 0.; // Celluar value, random for each position, but consistent.
 for(int x = -expand; x < expand*2; x++) {
 	for(int y = -expand; y < expand*2; y++) {
 		for(int z = (!is3d ? 0 : -expand); z < (!is3d ? 1 : expand*2); z++) {
 			vec3 offset = vec3(float(x), float(y), float(z));
 			vec3 testUV = floor(scaleUV + offset);
-		
-			vec3 distTarget = (voronoi_noise_hash_noise_range(vec3(testUV)) * jitter) + offset;
+			
+			vec3 possibleCellValue = (voronoi_noise_hash_noise_range(vec3(testUV)) * jitter);
+			vec3 distTarget = possibleCellValue + offset;
 			if (!is3d) {
 				distTarget = vec3(distTarget.xy, 0.);
 			}
@@ -145,10 +148,10 @@ for(int x = -expand; x < expand*2; x++) {
 				break;
 				case 3:
 					vec3 distV = vec3(pow(distTarget.x - remainder.x, 2.), pow(distTarget.y - remainder.y, 2.), pow(distTarget.z - remainder.z, 2.));
-					float distSqrt = distV.x + distV.y + distV.z;
+					float distSquared = distV.x + distV.y + distV.z;
 					
 					float distManhattanSquared = pow(abs(remainder.x - distTarget.x) + abs(remainder.y - distTarget.y) + abs(remainder.z - distTarget.z), 2.);
-					dist = (distSqrt + distManhattanSquared) / 2.; // Hybrid
+					dist = (distSquared + distManhattanSquared) / 2.; // Hybrid
 				break;
 			}
 			dist *= distanceScale;
@@ -156,7 +159,8 @@ for(int x = -expand; x < expand*2; x++) {
 			if(dist < minFound) {
 				found2 = minFound;
 				minFound = dist;
-				cellValue = ((voronoi_noise_hash_noise_range(testUV) + 1.) / 2.).x;
+				cellValue = fract(possibleCellValue.x);
+				// cellValue = ((voronoi_noise_hash_noise_range(testUV) + 1.) / 2.).x;
 			}
 			else if (dist < found2) {
 				found2 = dist;
@@ -255,8 +259,7 @@ void fragment() {
 
 }
 "
-graph_offset = Vector2(-240, 330)
-preview_params/Distance_Function = "0"
+graph_offset = Vector2(-400.696, 37.159)
 nodes/fragment/0/position = Vector2(900, 400)
 nodes/fragment/3/node = SubResource("VisualShaderNodeInput_kd13p")
 nodes/fragment/3/position = Vector2(-800, 160)
@@ -295,9 +298,9 @@ nodes/fragment/18/position = Vector2(-100, 380)
 nodes/fragment/19/node = SubResource("VisualShaderNodeFloatParameter_kd13p")
 nodes/fragment/19/position = Vector2(-120, 1040)
 nodes/fragment/20/node = SubResource("VisualShaderNodeCustom_4gcqo")
-nodes/fragment/20/position = Vector2(-360, -160)
+nodes/fragment/20/position = Vector2(-80, -220)
 nodes/fragment/21/node = SubResource("VisualShaderNodeCustom_k806d")
-nodes/fragment/21/position = Vector2(460, 40)
+nodes/fragment/21/position = Vector2(380, 60)
 nodes/fragment/22/node = SubResource("VisualShaderNodeFloatConstant_kd13p")
-nodes/fragment/22/position = Vector2(221.41, 263.033)
-nodes/fragment/connections = PackedInt32Array(6, 0, 5, 2, 5, 0, 13, 1, 14, 0, 13, 0, 10, 0, 12, 3, 14, 0, 18, 6, 15, 0, 18, 5, 17, 0, 18, 4, 11, 0, 18, 2, 13, 0, 18, 1, 18, 0, 12, 0, 18, 1, 12, 1, 18, 2, 12, 2, 19, 0, 18, 3, 3, 0, 18, 0, 3, 0, 21, 0, 22, 0, 21, 2, 3, 0, 20, 0, 12, 0, 0, 0)
+nodes/fragment/22/position = Vector2(120, 200)
+nodes/fragment/connections = PackedInt32Array(6, 0, 5, 2, 5, 0, 13, 1, 14, 0, 13, 0, 10, 0, 12, 3, 14, 0, 18, 6, 15, 0, 18, 5, 17, 0, 18, 4, 11, 0, 18, 2, 13, 0, 18, 1, 18, 0, 12, 0, 18, 1, 12, 1, 18, 2, 12, 2, 19, 0, 18, 3, 3, 0, 18, 0, 3, 0, 20, 0, 3, 0, 21, 0, 22, 0, 21, 2, 12, 0, 0, 0)

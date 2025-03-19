@@ -196,7 +196,6 @@ void fragment() {
 
 }
 "
-graph_offset = Vector2(364.636, 545.091)
 nodes/fragment/0/position = Vector2(1800, 580)
 nodes/fragment/5/node = SubResource("VisualShaderNodeInput_bowvu")
 nodes/fragment/5/position = Vector2(-1360, 680)

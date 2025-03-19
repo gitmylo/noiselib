@@ -64,10 +64,9 @@ func _get_output_port_type(port):
 func _get_global_code(mode):
 	return """
 	vec3 voronoi_noise_hash_noise_range( vec3 p ) {
-		p = mod(p * p.zxy + p.yzx, 96.267); // New pseudo-random step which improves the noise function here
-		p = p + p.zxy - p.yzx;
-		p *= mat3(vec3(127.1, 311.7, -53.7), vec3(269.5, 183.3, 77.1), vec3(-301.7, 27.3, 215.3));
-		return 2.0 * fract(fract(p)*4375.55) -1.;
+		p *= mat3(vec3(-4252.151, 3441.637, -1331.937), vec3(7569.135, -134.389, 5377.171754), vec3(-3301.746, 247.317, 2715.364));
+		vec3 result = fract(fract(p)*6753.7245) -1.;
+		return 2.0 * fract(vec3((result.x + result.y + result.z) / 3.) * vec3(15714.5427, 7541.5254, 54224.7245)) -1.;
 	}
 	
 	// Returns (value, dist, dist2)
@@ -88,8 +87,9 @@ for(int x = -expand; x < expand*2; x++) {
 		for(int z = (!is3d ? 0 : -expand); z < (!is3d ? 1 : expand*2); z++) {
 			vec3 offset = vec3(float(x), float(y), float(z));
 			vec3 testUV = floor(scaleUV + offset);
-		
-			vec3 distTarget = (voronoi_noise_hash_noise_range(vec3(testUV)) * jitter) + offset;
+			
+			vec3 possibleCellValue = (voronoi_noise_hash_noise_range(vec3(testUV)) * jitter);
+			vec3 distTarget = possibleCellValue + offset;
 			if (!is3d) {
 				distTarget = vec3(distTarget.xy, 0.);
 			}
@@ -116,7 +116,7 @@ for(int x = -expand; x < expand*2; x++) {
 			if(dist < minFound) {
 				found2 = minFound;
 				minFound = dist;
-				cellValue = ((voronoi_noise_hash_noise_range(testUV) + 1.) / 2.).x;
+				cellValue = fract(possibleCellValue.x);
 			}
 			else if (dist < found2) {
 				found2 = dist;

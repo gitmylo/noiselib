@@ -18,7 +18,7 @@ shader_parameter/Scale = 50.0
 shader_parameter/Distance_Scale = 1.0
 shader_parameter/Distance_Function = 0
 shader_parameter/Jitter = 1.0
-shader_parameter/Return_Type = 1
+shader_parameter/Return_Type = 0
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_uhqqe"]
 material = SubResource("ShaderMaterial_uhqqe")
